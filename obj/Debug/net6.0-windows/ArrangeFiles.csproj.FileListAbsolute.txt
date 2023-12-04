@@ -1,0 +1,15 @@
+D:\ArrangeFiles\bin\Debug\net6.0-windows\ArrangeFiles.exe
+D:\ArrangeFiles\bin\Debug\net6.0-windows\ArrangeFiles.deps.json
+D:\ArrangeFiles\bin\Debug\net6.0-windows\ArrangeFiles.runtimeconfig.json
+D:\ArrangeFiles\bin\Debug\net6.0-windows\ArrangeFiles.dll
+D:\ArrangeFiles\bin\Debug\net6.0-windows\ArrangeFiles.pdb
+D:\ArrangeFiles\obj\Debug\net6.0-windows\ArrangeFiles.csproj.AssemblyReference.cache
+D:\ArrangeFiles\obj\Debug\net6.0-windows\ArrangeFiles.GeneratedMSBuildEditorConfig.editorconfig
+D:\ArrangeFiles\obj\Debug\net6.0-windows\ArrangeFiles.AssemblyInfoInputs.cache
+D:\ArrangeFiles\obj\Debug\net6.0-windows\ArrangeFiles.AssemblyInfo.cs
+D:\ArrangeFiles\obj\Debug\net6.0-windows\ArrangeFiles.csproj.CoreCompileInputs.cache
+D:\ArrangeFiles\obj\Debug\net6.0-windows\ArrangeFiles.dll
+D:\ArrangeFiles\obj\Debug\net6.0-windows\refint\ArrangeFiles.dll
+D:\ArrangeFiles\obj\Debug\net6.0-windows\ArrangeFiles.pdb
+D:\ArrangeFiles\obj\Debug\net6.0-windows\ArrangeFiles.genruntimeconfig.cache
+D:\ArrangeFiles\obj\Debug\net6.0-windows\ref\ArrangeFiles.dll

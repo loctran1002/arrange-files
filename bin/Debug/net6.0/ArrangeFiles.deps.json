@@ -1,0 +1,23 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v6.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v6.0": {
+      "ArrangeFiles/1.0.0": {
+        "runtime": {
+          "ArrangeFiles.dll": {}
+        }
+      }
+    }
+  },
+  "libraries": {
+    "ArrangeFiles/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
