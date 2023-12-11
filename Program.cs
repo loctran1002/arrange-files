@@ -1,16 +1,23 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using Microsoft.Office.Interop.Excel;
 using Application = Microsoft.Office.Interop.Excel.Application;
+
+#region General
+string nameSheet = "Formated";
+#endregion
+
+List<string> listUsedFile = new List<string>();
+List<string> listNotExistFile = new List<string>();
 
 void Main()
 {
     try
     {
-        //while (true)
-        //{
+        // Start processing
         Console.WriteLine("Enter folder's path which contains all files:");
         var linkFiles = Console.ReadLine();
         while (linkFiles == null || !Directory.Exists(linkFiles))
@@ -24,7 +31,7 @@ void Main()
         while (excelFile == null || !File.Exists(excelFile))
         {
             Console.WriteLine("Enter the excel file's path again:");
-            linkFiles = Console.ReadLine();
+            excelFile = Console.ReadLine();
         }
 
         // Get all files
@@ -46,7 +53,21 @@ void Main()
         HandleFileExcel(linkFiles, excelFile, allFiles, allFolders);
 
         Console.WriteLine("===================== Done =====================");
-        //}
+
+        // Remove the used files
+        RemoveUsedFiles(listUsedFile);
+
+        // Show list of not exist files
+        if (listNotExistFile.Count > 0)
+        {
+            string message = "";
+            listNotExistFile.ForEach(x => message += $"{x}\n");
+            MessageBox.Show(message, "List of not exist files in excel file", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+
+        // Reset data
+        listUsedFile.Clear();
+        listNotExistFile.Clear();
     }
     catch (Exception ex)
     {
@@ -62,27 +83,20 @@ void HandleFileExcel(string rootLink, string excelFile, List<string?> allFiles, 
     try
     {
         // Kill excel file if opening
-        KillExcelProcessByName(excelFile);
+        KillExcelProcessByName(Path.GetFileName(excelFile));
 
         // Process
         workbook = excelApp.Workbooks.Open(excelFile);
-        Worksheet worksheet = (Worksheet)workbook.Sheets[1];
+        Worksheet worksheet = (Worksheet)workbook.Sheets[nameSheet];
         int rowCount = worksheet.UsedRange.Rows.Count;
         for (int row = 2; row <= rowCount; row++)
         {
-            string? folder = worksheet.Cells[row, 1].Value2.ToString();
+            string? folder = worksheet.Cells[row, 1].Value2 as string;
             string? file = worksheet.Cells[row, 2].Value2 as string;
 
-            if (folder == null || file == null)
+            if (folder == null)
                 continue;
-
-            // Check existion of file to show warning message
-            var fileLink = Path.Combine(rootLink, file);
-            if (!File.Exists(fileLink))
-            {
-                listNotExistFile.Add(file);
-                continue;
-            }
+            else folder = folder.TrimEnd();
 
             // Create new folder if not exist
             var folderLink = Path.Combine(rootLink, folder);
@@ -91,16 +105,24 @@ void HandleFileExcel(string rootLink, string excelFile, List<string?> allFiles, 
                 Directory.CreateDirectory(folderLink);
             }
 
-            var destFolderLink = Path.Combine(rootLink, folder, file);
-            File.Move(fileLink, destFolderLink, true);
-        }
+            if (file == null || file == "" || file == "\n")
+                continue;
+            else file = file.TrimEnd();
 
-        // Show list of not exist files
-        if(listNotExistFile.Count > 0)
-        {
-            string message = "";
-            listNotExistFile.ForEach(x => message += $"{x}\n");
-            MessageBox.Show(message, "List of not exist files in excel file", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            // Check existion of file to show warning message
+            List<string?> listPath = CreateFilePath(rootLink, allFiles, file);
+            foreach (var fileLink in listPath)
+            {
+                if (!File.Exists(fileLink))
+                {
+                    listNotExistFile.Add(file);
+                    continue;
+                }
+
+                var destFolderLink = Path.Combine(rootLink, folder, Path.GetFileName(fileLink));
+                File.Copy(fileLink, destFolderLink, true);
+                listUsedFile.Add(fileLink);
+            }
         }
     }
     finally
@@ -108,6 +130,66 @@ void HandleFileExcel(string rootLink, string excelFile, List<string?> allFiles, 
         var misValue = System.Reflection.Missing.Value;
         workbook?.Close(false, misValue, misValue);
         excelApp.Quit();
+        //KillProcessById(excelApp.Hwnd);
+    }
+}
+
+List<string?> CreateFilePath(string rootLink, List<string?> allFiles, string file)
+{
+    var listPath = new List<string?>();
+    foreach (var nameRealFile in allFiles)
+    {
+        if (nameRealFile == null)
+            continue;
+
+        if (nameRealFile.Contains(file))
+        {
+            listPath.Add(Path.Combine(rootLink, nameRealFile));
+        }
+
+        //// Check first characters
+        //var formatedName = nameRealFile;
+        //var firstChars = formatedName.Split('_').First();
+        //if (firstChars == null)
+        //    continue; // TODO
+        //if (IsNumeric(firstChars))
+        //{
+        //    formatedName = formatedName.Remove(0, formatedName.IndexOf('_') + 1);
+        //}
+        //else if(file == formatedName)
+        //{
+        //    name = nameRealFile;
+        //    break;
+        //}
+
+        //// Remove last characters
+        //var lastIndex = nameRealFile.LastIndexOf('_');
+        //if (lastIndex == -1)
+        //    continue;
+        //formatedName = formatedName.Remove(lastIndex);
+
+        //// Find real file's name
+        //if (file == formatedName)
+        //{
+        //    name = nameRealFile;
+        //    break;
+        //}
+    }
+
+    return listPath;
+}
+
+bool IsNumeric(string input)
+{
+    return Regex.IsMatch(input, @"^\d+$");
+}
+
+void RemoveUsedFiles(List<string> listFile)
+{
+    foreach (var fileLink in listFile)
+    {
+        if (File.Exists(fileLink))
+            File.Delete(fileLink);
     }
 }
 
@@ -115,14 +197,18 @@ void HandleSameName(string rootLink, List<string> allFiles, List<string> allFold
 {
     foreach (var file in allFiles)
     {
-        string nameFile = file.Split('.').First();
-        var indexFolder = allFolders.FindIndex(x => x.Split('.').First() == nameFile);
+        string nameFile = Path.GetFileNameWithoutExtension(file);
+        var indexFolder = allFolders.FindIndex(x => x == nameFile);
         if (indexFolder == -1)
             continue;
 
         var fileLink = Path.Combine(rootLink, file);
         var destFolderLink = Path.Combine(rootLink, allFolders[indexFolder], file);
         File.Move(fileLink, destFolderLink, true);
+        //File.Copy(fileLink, destFolderLink, true);
+
+        // Add file to remove after end program
+        //listUsedFile.Add(fileLink);
     }
 }
 
@@ -137,7 +223,7 @@ void KillExcelProcessByName(string fileName)
             string openedFileName = process.MainWindowTitle;
 
             // Check if the file name matches the target file
-            if (openedFileName.Equals(fileName, StringComparison.OrdinalIgnoreCase))
+            if (openedFileName == $"{fileName} - Excel")
             {
                 // Kill the Excel process
                 process.Kill();
@@ -148,6 +234,26 @@ void KillExcelProcessByName(string fileName)
         {
             // Ignore any exceptions when accessing the process
         }
+    }
+}
+
+void KillProcessById(int processId)
+{
+    try
+    {
+        // Get the process by ID
+        Process excelProcess = Process.GetProcessById(processId);
+
+        // Kill the process
+        excelProcess.Kill();
+
+        // Release resources
+        excelProcess.Close();
+    }
+    catch (ArgumentException)
+    {
+        // Process with the specified ID is not running
+        Console.WriteLine($"Process with ID {processId} is not currently running.");
     }
 }
 
